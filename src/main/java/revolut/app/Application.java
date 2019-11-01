@@ -1,25 +1,18 @@
-package revolut;
+package revolut.app;
 
+import revolut.app.api.user.RegistrationHandler;
 import com.sun.net.httpserver.BasicAuthenticator;
 import com.sun.net.httpserver.HttpContext;
 import com.sun.net.httpserver.HttpServer;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
-import java.net.URLDecoder;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 
-import static java.util.stream.Collectors.*;
-import static revolut.ApiUtils.splitQuery;
-import static revolut.Configuration.getObjectMapper;
-import static revolut.Configuration.getUserService;
-import static revolut.Configuration.getErrorHandler;
+import static revolut.app.Configuration.*;
+import static revolut.app.api.ApiUtils.splitQuery;
 
 class Application {
 
@@ -28,8 +21,8 @@ class Application {
         HttpServer server = HttpServer.create(new InetSocketAddress(serverPort), 0);
 
         RegistrationHandler registrationHandler = new RegistrationHandler(getUserService(), getObjectMapper(),
-                getErrorHandler());
-        server.createContext("/api/users/register", registrationHandler::handle);
+            getErrorHandler());
+        server.createContext("/api/users/transfer", registrationHandler::handle);
 
         HttpContext context =server.createContext("/api/hello", (exchange -> {
 

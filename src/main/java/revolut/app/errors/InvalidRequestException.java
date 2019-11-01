@@ -1,6 +1,6 @@
-package revolut.errors;
+package revolut.app.errors;
 
-public class InvalidRequestException extends ApplicationException {
+class InvalidRequestException extends ApplicationException {
 
     public InvalidRequestException(int code, String message) {
         super(code, message);

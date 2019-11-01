@@ -1,4 +1,4 @@
-package revolut;
+package revolut.app.api;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;

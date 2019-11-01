@@ -1,4 +1,4 @@
-package revolut.errors;
+package revolut.app.errors;
 
 import java.util.function.Function;
 import java.util.function.Supplier;

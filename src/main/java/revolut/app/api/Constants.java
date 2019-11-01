@@ -1,4 +1,4 @@
-package revolut;
+package revolut.app.api;
 
 public class Constants {
 

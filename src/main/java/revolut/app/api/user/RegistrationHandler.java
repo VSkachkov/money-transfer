@@ -1,8 +1,16 @@
-package revolut;
+package revolut.app.api.user;
 
+import revolut.app.api.Constants;
+import revolut.app.api.Handler;
+import revolut.app.api.ResponseEntity;
+import revolut.app.api.StatusCode;
+import revolut.app.errors.ApplicationExceptions;
+import revolut.app.errors.GlobalExceptionHandler;
+import revolut.domain.account.MoneyTransferDto;
+import revolut.domain.account.NewUser;
+import revolut.domain.account.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.HttpExchange;
-import revolut.errors.ApplicationExceptions;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -10,12 +18,12 @@ import java.io.OutputStream;
 
 public class RegistrationHandler extends Handler {
 
-    private final UserService userService;
+    private final UserService userAccountService;
 
-    public RegistrationHandler(UserService userService, ObjectMapper objectMapper,
+    public RegistrationHandler(UserService userAccountService, ObjectMapper objectMapper,
                                GlobalExceptionHandler exceptionHandler) {
         super(objectMapper, exceptionHandler);
-        this.userService = userService;
+        this.userAccountService = userAccountService;
     }
 
     @Override
@@ -37,14 +45,9 @@ public class RegistrationHandler extends Handler {
     }
 
     private ResponseEntity<RegistrationResponse> doPost(InputStream is) {
-        RegistrationRequest registerRequest = super.readRequest(is, RegistrationRequest.class);
+        MoneyTransferDto transferDto = super.readRequest(is, MoneyTransferDto.class);
 
-        NewUser user = NewUser.builder()
-            .login(registerRequest.getLogin())
-            .password(PasswordEncoder.encode(registerRequest.getPassword()))
-            .build();
-
-        String userId = userService.create(user);
+        String userId = userAccountService.createTransaction(transferDto);
 
         RegistrationResponse response = new RegistrationResponse(userId);
 

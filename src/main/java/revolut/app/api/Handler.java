@@ -1,13 +1,13 @@
-package revolut;
+package revolut.app.api;
 
-import java.io.InputStream;
-
+import revolut.app.errors.ApplicationExceptions;
+import revolut.app.errors.GlobalExceptionHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
-
 import io.vavr.control.Try;
-import revolut.errors.ApplicationExceptions;
+
+import java.io.InputStream;
 
 public abstract class Handler {
 
@@ -22,7 +22,7 @@ public abstract class Handler {
 
     public void handle(HttpExchange exchange) {
         Try.run(() -> execute(exchange))
-                .onFailure(thr -> exceptionHandler.handle(thr, exchange));
+            .onFailure(thr -> exceptionHandler.handle(thr, exchange));
     }
 
     protected abstract void execute(HttpExchange exchange) throws Exception;
@@ -30,12 +30,12 @@ public abstract class Handler {
 
     protected <T> T readRequest(InputStream is, Class<T> type) {
         return Try.of(() -> objectMapper.readValue(is, type))
-                .getOrElseThrow(ApplicationExceptions.invalidRequest());
+            .getOrElseThrow(ApplicationExceptions.invalidRequest());
     }
 
     protected <T> byte[] writeResponse(T response) {
         return Try.of(() -> objectMapper.writeValueAsBytes(response))
-                .getOrElseThrow(ApplicationExceptions.invalidRequest());
+            .getOrElseThrow(ApplicationExceptions.invalidRequest());
     }
 
     protected static Headers getHeaders(String key, String value) {

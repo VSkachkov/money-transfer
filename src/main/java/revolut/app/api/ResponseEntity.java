@@ -1,4 +1,4 @@
-package revolut;
+package revolut.app.api;
 
 import com.sun.net.httpserver.Headers;
 import lombok.Value;

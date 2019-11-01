@@ -1,10 +1,8 @@
-package revolut;
+package revolut.app.api.user;
 
-import lombok.Data;
 import lombok.Value;
 
 @Value
-@Data
 class RegistrationResponse {
 
     String id;

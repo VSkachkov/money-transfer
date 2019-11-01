@@ -1,6 +1,6 @@
-package revolut.errors;
+package revolut.app.errors;
 
-public class MethodNotAllowedException extends ApplicationException {
+class MethodNotAllowedException extends ApplicationException {
 
     MethodNotAllowedException(int code, String message) {
         super(code, message);

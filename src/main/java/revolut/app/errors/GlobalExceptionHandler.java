@@ -1,12 +1,10 @@
-package revolut;
+package revolut.app.errors;
 
+import revolut.app.api.Constants;
+import revolut.app.api.ErrorResponse;
+import revolut.app.api.ErrorResponse.ErrorResponseBuilder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.HttpExchange;
-import revolut.errors.ErrorResponse;
-import revolut.errors.ErrorResponse.ErrorResponseBuilder;
-import revolut.errors.InvalidRequestException;
-import revolut.errors.MethodNotAllowedException;
-import revolut.errors.ResourceNotFoundException;
 
 import java.io.IOException;
 import java.io.OutputStream;
