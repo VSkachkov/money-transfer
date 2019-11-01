@@ -41,11 +41,14 @@ class InMemoryUserAccountsRepositoryTest {
         }
 
         public void run() {
-//            for (int i = 0; i < 100; i++) {
-//                repository.createTransaction(transferDto1);
-//                repository.createTransaction(transferDto2);
-//            }
+            if (repository == null) {
+                throw new NullPointerException();
+            }
+            System.out.println("Initial value u1 "+ repository.getAccountStatus(user1));
+            System.out.println("Initial value u2 "+ repository.getAccountStatus(user2));
+            int n = 0;
             while (true) {
+                n++;
                 for (int i = 0; i < 1000; i++) {
                     repository.createTransaction(transferDto1);
                     repository.createTransaction(transferDto2);
@@ -53,8 +56,10 @@ class InMemoryUserAccountsRepositoryTest {
                 BigDecimal acc1 = repository.getAccountStatus(user1);
                 BigDecimal acc2 = repository.getAccountStatus(user2);
                 if (acc1.add(acc2).compareTo(BigDecimal.valueOf(20)) != 0) {
-                    System.out.println("acc1 " + acc1.toString());
-                    System.out.println("acc2 " + acc2.toString());
+                    System.out.println("Inconsistent data found!!");
+                    System.out.println("acc1 " + acc1);
+                    System.out.println("acc2 " + acc2);
+                    System.out.println("n " + n);
                     System.exit(0);
                 }
             }
@@ -64,18 +69,17 @@ class InMemoryUserAccountsRepositoryTest {
 
     @Test
     public void test() throws InterruptedException {
-        UUID user1 = UUID.randomUUID();
-        UUID user2 = UUID.randomUUID();
         Map<UUID, BigDecimal> initial = new HashMap<>();
         initial.put(user1, BigDecimal.TEN);
         initial.put(user2, BigDecimal.TEN);
         InMemoryUserAccountsRepository repository = new InMemoryUserAccountsRepository(initial);
+        Assertions.assertEquals(BigDecimal.valueOf(20), repository.getAccountStatus(user1).add(repository.getAccountStatus(user2)));
         ExecutorService exec =
                 Executors.newCachedThreadPool();
         for (int i = 0; i < 10; i++) {
             exec.execute(new MoneyChecker(repository));
         }
-        exec.shutdown();
+        TimeUnit.SECONDS.sleep(5);
         Assertions.assertEquals(BigDecimal.valueOf(20), repository.getAccountStatus(user1).add(repository.getAccountStatus(user2)));
     }
 }
