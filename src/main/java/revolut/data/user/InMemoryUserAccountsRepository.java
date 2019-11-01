@@ -19,7 +19,7 @@ public class InMemoryUserAccountsRepository implements UserAccountsRepository {
     private static final Map<UUID, BigDecimal> USERS_ACCOUNT_STORE = new ConcurrentHashMap() ;
 
     @Override
-    public String createTransaction(MoneyTransferDto transferDto) {
+    public synchronized String createTransaction(MoneyTransferDto transferDto) {
         BigDecimal receiverAccount = USERS_ACCOUNT_STORE.getOrDefault(transferDto.getReceiverId(), BigDecimal.ZERO);
         BigDecimal senderAccount = USERS_ACCOUNT_STORE.getOrDefault(transferDto.getSenderId(), BigDecimal.ZERO);
         USERS_ACCOUNT_STORE.put(transferDto.getReceiverId(), receiverAccount.add(transferDto.getAmount()));
@@ -27,7 +27,11 @@ public class InMemoryUserAccountsRepository implements UserAccountsRepository {
         return "Result!";
     }
 
-    public BigDecimal getAccountStatus(UUID client) {
+    synchronized BigDecimal getAccountStatus(UUID client) {
         return USERS_ACCOUNT_STORE.get(client);
+    }
+
+    public synchronized BigDecimal getSum() {
+        return USERS_ACCOUNT_STORE.entrySet().stream().map(Map.Entry::getValue).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 }
