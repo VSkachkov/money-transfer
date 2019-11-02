@@ -7,8 +7,7 @@ import revolut.app.api.StatusCode;
 import revolut.app.errors.ApplicationExceptions;
 import revolut.app.errors.GlobalExceptionHandler;
 import revolut.domain.account.MoneyTransferDto;
-import revolut.domain.account.NewUser;
-import revolut.domain.account.UserService;
+import revolut.domain.account.UserAccountService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.HttpExchange;
 
@@ -18,9 +17,9 @@ import java.io.OutputStream;
 
 public class RegistrationHandler extends Handler {
 
-    private final UserService userAccountService;
+    private final UserAccountService userAccountService;
 
-    public RegistrationHandler(UserService userAccountService, ObjectMapper objectMapper,
+    public RegistrationHandler(UserAccountService userAccountService, ObjectMapper objectMapper,
                                GlobalExceptionHandler exceptionHandler) {
         super(objectMapper, exceptionHandler);
         this.userAccountService = userAccountService;

@@ -3,7 +3,7 @@ package revolut.domain.account;
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
-public class UserService {
+public class UserAccountService {
 
     private final UserAccountsRepository userAccountsRepository;
 
