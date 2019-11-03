@@ -3,6 +3,7 @@ package revolut.data.user;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import revolut.domain.account.Account;
 import revolut.domain.account.MoneyTransferDto;
 
 import java.math.BigDecimal;
@@ -13,28 +14,31 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.*;
-
-public class InMemoryUserAccountsRepositoryTest {
+public class InMemoryTransactionRepositoryTest {
     UUID user1 = UUID.randomUUID();
     UUID user2 = UUID.randomUUID();
     BigDecimal one = BigDecimal.ONE; //TODO java is pass-by-value
     MoneyTransferDto transferDto1 = MoneyTransferDto.builder().receiverId(user1).senderId(user2).amount(one).build();
     MoneyTransferDto transferDto2 = MoneyTransferDto.builder().receiverId(user2).senderId(user1).amount(one).build();
-    InMemoryUserAccountsRepository repository;
+    InMemoryAccountRepository repository;
+
     @Before
     public void setUp() throws Exception {
-        Map<UUID, BigDecimal> initial = new HashMap<>();
-        initial.put(user1, BigDecimal.TEN);
-        initial.put(user2, BigDecimal.TEN);
-        repository = new InMemoryUserAccountsRepository(initial);
+        Account account1 = Account.builder().balance(BigDecimal.TEN).build();
+        Account account2 = Account.builder().balance(BigDecimal.TEN).build();
+        Map<UUID, Account> initial = new HashMap<>();
+        initial.put(user1, account1);
+        initial.put(user2, account2);
+        repository = new InMemoryAccountRepository(initial);
     }
 
     @Test
     public void createTransaction() {
-        repository.createTransaction(transferDto1);
-        repository.createTransaction(transferDto2);
-        Assert.assertEquals(BigDecimal.valueOf(20), repository.getAccountStatus(user1).add(repository.getAccountStatus(user2)));
+        repository.transferBetweenAccounts(transferDto1);
+        repository.transferBetweenAccounts(transferDto2);
+        Assert.assertEquals(BigDecimal.valueOf(20),
+                repository.getAccountStatus(user1).getBalance()
+                        .add(repository.getAccountStatus(user2).getBalance()));
     }
 
     @Test
@@ -51,9 +55,9 @@ public class InMemoryUserAccountsRepositoryTest {
     }
 
     class MoneyChecker implements Runnable {
-        InMemoryUserAccountsRepository repository;
+        InMemoryAccountRepository repository;
 
-        MoneyChecker(InMemoryUserAccountsRepository repository) {
+        MoneyChecker(InMemoryAccountRepository repository) {
             this.repository = repository;
         }
 
@@ -67,8 +71,8 @@ public class InMemoryUserAccountsRepositoryTest {
             while (true) {
                 n++;
                 for (int i = 0; i < 1000; i++) {
-                    repository.createTransaction(transferDto1);
-                    repository.createTransaction(transferDto2);
+                    repository.transferBetweenAccounts(transferDto1);
+                    repository.transferBetweenAccounts(transferDto2);
                 }
                 BigDecimal accSum = repository.getSum();
                 if (accSum.compareTo(BigDecimal.valueOf(20)) != 0) {
