@@ -22,12 +22,12 @@ public class Account {
     private ReentrantLock lock = new ReentrantLock();
 
     public synchronized Account add(BigDecimal augend) {
-        balance.add(augend);
+        balance = balance.add(augend);
         return this;
     }
 
     public synchronized Account substract(BigDecimal subtrahend) {
-        balance.subtract(subtrahend);
+        balance = balance.subtract(subtrahend);
         return this;
     }
 }

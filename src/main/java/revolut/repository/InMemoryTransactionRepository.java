@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class TransactionRepositoryImpl implements TransactionRepository {
+public class InMemoryTransactionRepository implements TransactionRepository {
 
     private Map<UUID, Transaction> transactionRepository = new ConcurrentHashMap();
     @Override
