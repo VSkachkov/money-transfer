@@ -7,6 +7,7 @@ import revolut.app.api.StatusCode;
 import revolut.app.errors.ApplicationExceptions;
 import revolut.app.errors.GlobalExceptionHandler;
 import revolut.domain.account.MoneyTransferDto;
+import revolut.domain.account.Transaction;
 import revolut.domain.account.UserAccountService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.HttpExchange;
@@ -46,9 +47,9 @@ public class RegistrationHandler extends Handler {
     private ResponseEntity<RegistrationResponse> doPost(InputStream is) {
         MoneyTransferDto transferDto = super.readRequest(is, MoneyTransferDto.class);
 
-        String userId = userAccountService.createTransaction(transferDto);
+        Transaction userId = userAccountService.createTransaction(transferDto);
 
-        RegistrationResponse response = new RegistrationResponse(userId);
+        RegistrationResponse response = new RegistrationResponse(userId.toString());
 
         return new ResponseEntity<>(response,
             getHeaders(Constants.CONTENT_TYPE, Constants.APPLICATION_JSON), StatusCode.OK);

@@ -1,16 +1,19 @@
 package revolut.app;
 
 import revolut.app.errors.GlobalExceptionHandler;
-import revolut.data.user.InMemoryUserAccountsRepository;
-import revolut.domain.account.UserAccountsRepository;
+import revolut.data.user.InMemoryAccountRepository;
+import revolut.domain.account.AccountRepository;
+import revolut.domain.account.TransactionRepository;
+import revolut.domain.account.TransactionRepositoryImpl;
 import revolut.domain.account.UserAccountService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 class Configuration {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-    private static final UserAccountsRepository USER_REPOSITORY = new InMemoryUserAccountsRepository();
-    private static final UserAccountService USER_SERVICE = new UserAccountService(USER_REPOSITORY);
+    private static final AccountRepository USER_REPOSITORY = new InMemoryAccountRepository();
+    private static final TransactionRepository TRANSACTION_REPOSITORY = new TransactionRepositoryImpl(); //TODO fix Impl
+    private static final UserAccountService USER_SERVICE = new UserAccountService(USER_REPOSITORY, TRANSACTION_REPOSITORY);
     private static final GlobalExceptionHandler GLOBAL_ERROR_HANDLER = new GlobalExceptionHandler(OBJECT_MAPPER);
 
     static ObjectMapper getObjectMapper() {
@@ -21,7 +24,7 @@ class Configuration {
         return USER_SERVICE;
     }
 
-    static UserAccountsRepository getUserRepository() {
+    static AccountRepository getUserRepository() {
         return USER_REPOSITORY;
     }
 

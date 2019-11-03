@@ -5,10 +5,16 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class UserAccountService {
 
-    private final UserAccountsRepository userAccountsRepository;
+    private final AccountRepository accountRepository;
+    private final TransactionRepository transactionRepository;
 
-    public String createTransaction(MoneyTransferDto transferDto) {
-        return userAccountsRepository.createTransaction(transferDto);
+    public Transaction createTransaction(MoneyTransferDto transferDto) {
+        Transaction transaction = accountRepository.transferBetweenAccounts(transferDto);
+        transactionRepository.save(transaction);
+        return transaction;
     }
 
+    public String getAllTransactions() {
+        return accountRepository.getAll();
+    }
 }
