@@ -3,8 +3,9 @@ package revolut.data.user;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import revolut.domain.account.Account;
-import revolut.domain.account.MoneyTransferDto;
+import revolut.entity.Account;
+import revolut.entity.MoneyTransferDto;
+import revolut.repository.InMemoryAccountRepository;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -65,8 +66,8 @@ public class InMemoryTransactionRepositoryTest {
             if (repository == null) {
                 throw new NullPointerException();
             }
-            System.out.println("Initial value u1 " + repository.getAccountStatus(user1));
-            System.out.println("Initial value u2 " + repository.getAccountStatus(user2));
+            System.out.println("Initial value u1 " + repository.getAccountStatus(user1).getBalance());
+            System.out.println("Initial value u2 " + repository.getAccountStatus(user2).getBalance());
             int n = 0;
             while (true) {
                 n++;

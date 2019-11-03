@@ -3,9 +3,9 @@ package revolut.app;
 import com.google.gson.Gson;
 import revolut.app.errors.AccountNotFoundException;
 import revolut.app.errors.ErrorDto;
-import revolut.domain.account.MoneyTransferDto;
-import revolut.domain.account.Transaction;
-import revolut.domain.account.UserAccountService;
+import revolut.entity.MoneyTransferDto;
+import revolut.entity.Transaction;
+import revolut.service.UserAccountService;
 
 import java.io.IOException;
 
@@ -18,7 +18,6 @@ class Application {
         Gson gson = new Gson();
         UserAccountService service = getUserService();
         path("/api", () -> {
-//            before("/*", (q, a) -> log.info("Received api call"));
 
             path("/transactions", () -> {
 

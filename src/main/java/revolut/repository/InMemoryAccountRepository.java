@@ -1,8 +1,12 @@
-package revolut.data.user;
+package revolut.repository;
 
 import revolut.app.errors.AccountNotFoundException;
-import revolut.domain.account.*;
 import lombok.NoArgsConstructor;
+import revolut.entity.Account;
+import revolut.entity.MoneyTransferDto;
+import revolut.entity.Status;
+import revolut.entity.Transaction;
+import revolut.repository.AccountRepository;
 
 import java.math.BigDecimal;
 import java.util.Date;
@@ -71,7 +75,7 @@ public class InMemoryAccountRepository implements AccountRepository {
         return ACCOUNT_STORE.entrySet().toString();
     }
 
-    synchronized Account getAccountStatus(UUID client) {
+    public synchronized Account getAccountStatus(UUID client) {
         return ACCOUNT_STORE.get(client);
     }
 

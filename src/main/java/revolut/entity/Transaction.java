@@ -1,4 +1,4 @@
-package revolut.domain.account;
+package revolut.entity;
 
 import lombok.Builder;
 import lombok.Getter;

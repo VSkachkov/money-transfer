@@ -1,4 +1,6 @@
-package revolut.domain.account;
+package revolut.repository;
+
+import revolut.entity.Transaction;
 
 import java.util.Map;
 import java.util.UUID;

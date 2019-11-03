@@ -1,4 +1,4 @@
-package revolut.domain.account;
+package revolut.entity;
 
 public enum Status {
     IN_PROCESS,

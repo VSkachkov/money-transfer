@@ -1,4 +1,7 @@
-package revolut.domain.account;
+package revolut.repository;
+
+import revolut.entity.MoneyTransferDto;
+import revolut.entity.Transaction;
 
 public interface AccountRepository {
 

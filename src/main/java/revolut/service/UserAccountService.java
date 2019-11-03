@@ -1,6 +1,10 @@
-package revolut.domain.account;
+package revolut.service;
 
 import lombok.AllArgsConstructor;
+import revolut.entity.MoneyTransferDto;
+import revolut.entity.Transaction;
+import revolut.repository.AccountRepository;
+import revolut.repository.TransactionRepository;
 
 @AllArgsConstructor
 public class UserAccountService {
