@@ -1,20 +1,21 @@
 package revolut.service;
 
 import lombok.AllArgsConstructor;
-import revolut.entity.Account;
-import revolut.entity.AccountDto;
-import revolut.entity.MoneyTransferDto;
-import revolut.entity.Transaction;
+import revolut.model.*;
+import revolut.converter.TransactionConverter;
 import revolut.repository.AccountRepository;
 import revolut.repository.TransactionRepository;
 
 import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @AllArgsConstructor
-public class UserAccountService {
+public class TransactionAccountService {
 
     private final AccountRepository accountRepository;
     private final TransactionRepository transactionRepository;
+    private final TransactionConverter transactionConverter = new TransactionConverter();
 
     public Transaction createTransaction(MoneyTransferDto transferDto) {
         Transaction transaction = accountRepository.transferBetweenAccounts(transferDto);
@@ -22,8 +23,11 @@ public class UserAccountService {
         return transaction;
     }
 
-    public String getAllTransactions() {
-        return accountRepository.getAll();
+    public List<TransactionDto> getAllTransactions() {
+        return transactionRepository.getAll()
+                .stream()
+                .map(entry -> transactionConverter.convert(entry.getKey(), entry.getValue()))
+                .collect(Collectors.toList());
     }
 
     public boolean createAccounts(List<AccountDto> accounts) {
@@ -36,5 +40,10 @@ public class UserAccountService {
 
     public List<AccountDto> getAccounts() {
         return accountRepository.getAccounts();
+    }
+
+    public TransactionDto getTransactionById(UUID id) {
+        return
+                transactionConverter.convert(id, transactionRepository.getById(id));
     }
 }

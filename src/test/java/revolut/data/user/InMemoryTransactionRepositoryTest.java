@@ -3,8 +3,8 @@ package revolut.data.user;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import revolut.entity.Account;
-import revolut.entity.MoneyTransferDto;
+import revolut.model.Account;
+import revolut.model.MoneyTransferDto;
 import revolut.repository.InMemoryAccountRepository;
 
 import java.math.BigDecimal;

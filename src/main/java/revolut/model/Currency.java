@@ -1,4 +1,4 @@
-package revolut.entity;
+package revolut.model;
 
 public enum Currency {
     EUR,

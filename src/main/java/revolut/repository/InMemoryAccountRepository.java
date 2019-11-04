@@ -2,7 +2,7 @@ package revolut.repository;
 
 import revolut.app.errors.AccountNotFoundException;
 import lombok.NoArgsConstructor;
-import revolut.entity.*;
+import revolut.model.*;
 
 import java.math.BigDecimal;
 import java.util.Date;
@@ -26,7 +26,7 @@ public class InMemoryAccountRepository implements AccountRepository {
     private static final Map<UUID, Account> ACCOUNT_STORE = new ConcurrentHashMap<>();
 
     @Override
-    public synchronized Transaction transferBetweenAccounts(MoneyTransferDto transferDto) {
+    public Transaction transferBetweenAccounts(MoneyTransferDto transferDto) {
         Status status;
 
         if (ACCOUNT_STORE.get(transferDto.getReceiverId()) == null) {
@@ -69,7 +69,7 @@ public class InMemoryAccountRepository implements AccountRepository {
 
     @Override
     public String getAll() {
-        return ACCOUNT_STORE.entrySet().toString();
+        return ACCOUNT_STORE.entrySet().toString(); //TODO fix
     }
 
     @Override

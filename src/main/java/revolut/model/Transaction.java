@@ -1,4 +1,4 @@
-package revolut.entity;
+package revolut.model;
 
 import lombok.Builder;
 import lombok.Getter;

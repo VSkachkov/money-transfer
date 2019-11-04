@@ -1,8 +1,8 @@
 package revolut.repository;
 
-import revolut.entity.AccountDto;
-import revolut.entity.MoneyTransferDto;
-import revolut.entity.Transaction;
+import revolut.model.AccountDto;
+import revolut.model.MoneyTransferDto;
+import revolut.model.Transaction;
 
 import java.util.List;
 
