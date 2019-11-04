@@ -1,15 +1,17 @@
-package revolut.data.user;
+package revolut.repository;
 
 import revolut.app.errors.AccountNotFoundException;
-import revolut.domain.account.*;
 import lombok.NoArgsConstructor;
+import revolut.model.*;
 
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @NoArgsConstructor
 public class InMemoryAccountRepository implements AccountRepository {
@@ -24,14 +26,14 @@ public class InMemoryAccountRepository implements AccountRepository {
     private static final Map<UUID, Account> ACCOUNT_STORE = new ConcurrentHashMap<>();
 
     @Override
-    public synchronized Transaction transferBetweenAccounts(MoneyTransferDto transferDto) {
+    public Transaction transferBetweenAccounts(MoneyTransferDto transferDto) {
         Status status;
 
         if (ACCOUNT_STORE.get(transferDto.getReceiverId()) == null) {
             throw new AccountNotFoundException(500, "Not found account");
         }
-        Account receiverAccount = ACCOUNT_STORE.computeIfPresent(transferDto.getReceiverId(), (key, val) -> val.substract(transferDto.getAmount()));
-        Account senderAccount = ACCOUNT_STORE.computeIfPresent(transferDto.getSenderId(), (key, val) -> val.substract(transferDto.getAmount()));
+        Account receiverAccount = ACCOUNT_STORE.get(transferDto.getReceiverId());
+        Account senderAccount = ACCOUNT_STORE.get(transferDto.getSenderId());
         try {
             status = Status.IN_PROCESS;
             if (senderAccount.getLock().tryLock(WAIT_SEC, TimeUnit.SECONDS)) {
@@ -40,8 +42,8 @@ public class InMemoryAccountRepository implements AccountRepository {
                         if (senderAccount.getBalance().compareTo(transferDto.getAmount()) >= 0) {
                             ACCOUNT_STORE.computeIfPresent(transferDto.getSenderId(), (key, val) -> val.substract(transferDto.getAmount()));
                             ACCOUNT_STORE.computeIfPresent(transferDto.getReceiverId(), (key, val) -> val.add(transferDto.getAmount()));
-                        }
-                        else {
+                            status = Status.COMPLETED;
+                        } else {
                             status = Status.FAILED_SENDER_HAS_NOT_ENOUGH_MONEY;
                         }
                     }
@@ -53,8 +55,7 @@ public class InMemoryAccountRepository implements AccountRepository {
             }
         } catch (InterruptedException e) {
             status = Status.FAILED_TECHNICAL_ERROR;
-        }
-        finally {
+        } finally {
             senderAccount.getLock().unlock();
         }
         return Transaction.builder()
@@ -68,14 +69,33 @@ public class InMemoryAccountRepository implements AccountRepository {
 
     @Override
     public String getAll() {
-        return ACCOUNT_STORE.entrySet().toString();
+        return ACCOUNT_STORE.entrySet().toString(); //TODO fix
     }
 
-    synchronized Account getAccountStatus(UUID client) {
+    @Override
+    public void create(AccountDto newAccount) {
+        ACCOUNT_STORE.putIfAbsent(newAccount.getId(),
+                Account.builder().balance(newAccount.getBalance() != null ? newAccount.getBalance() : BigDecimal.ZERO).build());
+    }
+
+    @Override
+    public List<AccountDto> getAccounts() {
+        return ACCOUNT_STORE.entrySet().stream()
+                .map(account -> AccountDto.builder()
+                        .id(account.getKey())
+                        .balance(account.getValue().getBalance())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    public synchronized Account getAccountStatus(UUID client) {
         return ACCOUNT_STORE.get(client);
     }
 
     public synchronized BigDecimal getSum() {
-        return ACCOUNT_STORE.entrySet().stream().map(Map.Entry::getValue).map(Account::getBalance).reduce(BigDecimal.ZERO, BigDecimal::add);
+        return ACCOUNT_STORE.values()
+                .stream()
+                .map(Account::getBalance)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 }

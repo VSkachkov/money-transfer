@@ -1,46 +1,70 @@
 package revolut.app;
 
 import com.google.gson.Gson;
-import revolut.app.errors.AccountNotFoundException;
-import revolut.app.errors.ErrorDto;
-import revolut.domain.account.MoneyTransferDto;
-import revolut.domain.account.Transaction;
-import revolut.domain.account.UserAccountService;
+import com.google.gson.reflect.TypeToken;
+import org.eclipse.jetty.http.HttpStatus;
+import revolut.app.errors.ResultResponse;
+import revolut.model.AccountDto;
+import revolut.model.MoneyTransferDto;
+import revolut.model.Transaction;
+import revolut.service.TransactionAccountService;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
+import java.util.List;
+import java.util.UUID;
 
 import static revolut.app.Configuration.getUserService;
 import static spark.Spark.*;
+
+
 
 class Application {
     public static void main(String[] args) throws IOException {
         Configuration configuration = new Configuration();
         Gson gson = new Gson();
-        UserAccountService service = getUserService();
+        TransactionAccountService service = getUserService();
+        configSparkServer();
+
         path("/api", () -> {
-//            before("/*", (q, a) -> log.info("Received api call"));
-
-            path("/transactions", () -> {
-
-
-                get("", (req, res) -> service.getAllTransactions());
-                post("/create", (req, res) -> {
-                    final String body = req.body();
-                    res.header("Content-type", "Application/JSON");
-                    final MoneyTransferDto dto = gson.fromJson(body, MoneyTransferDto.class);
-                    Transaction transaction = service.createTransaction(dto);
-                    return gson.toJson(transaction);
-                });
+            before((req, res) -> res.type("application/json"));
+            get("/transactions", (req, res) ->{
+                return gson.toJson(service.getAllTransactions());
             });
-
-//            path("/accounts", () -> {
-//               post("/create", (req, res) -> service.createAccount())
-//            });
+            get("/transactions/:id", (req, res) ->{
+                return gson.toJson(service.getTransactionById(UUID.fromString(req.params(":id"))));
+            });
+            post("/transactions/create", (req, res) -> {
+                final MoneyTransferDto dto = gson.fromJson(req.body(), MoneyTransferDto.class);
+                Transaction transaction = service.createTransaction(dto);
+                return gson.toJson(transaction);
+            });
+            path("/accounts", () -> {
+               post("/create", (req, res) -> {
+                   Type itemsListType = new TypeToken<List<AccountDto>>() {}.getType();
+                   res.status(HttpStatus.CREATED_201);
+                   final List<AccountDto> accounts = gson.fromJson(req.body(), itemsListType);
+                   return gson.toJson(ResultResponse.builder().success(service.createAccounts(accounts)).build());
+               });
+               get("/get", (req, res) -> {
+                   return gson.toJson(service.getAccounts());
+               });
+            });
         });
-        exception(AccountNotFoundException.class, (exception, request, response) -> {
+    }
+
+    private static void configSparkServer() {
+        Gson gson = new Gson();
+        before((request, response) -> response.type("application/json"));
+        before((req, res) -> {
+            String path = req.pathInfo();
+            if (path.endsWith("/"))
+                res.redirect(path.substring(0, path.length() - 1));
+        });
+        exception(Exception.class, (exception, request, response) -> {
             // Handle the exception here
-            response.status(503);
-            response.body(gson.toJson(ErrorDto.builder().errorMessage("Service unavailable")));
+            response.status(500);
+            response.body(gson.toJson(ResultResponse.builder().success(false).message("Internal server error")));
         });
     }
 }

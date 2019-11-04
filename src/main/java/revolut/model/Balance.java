@@ -1,4 +1,4 @@
-package revolut.domain.account;
+package revolut.model;
 
 import java.math.BigDecimal;
 
