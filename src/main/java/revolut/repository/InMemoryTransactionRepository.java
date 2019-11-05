@@ -11,7 +11,7 @@ public class InMemoryTransactionRepository implements TransactionRepository {
 
     private Map<UUID, Transaction> transactionRepository = new ConcurrentHashMap();
     @Override
-    public void save(Transaction transaction) {
+    public void save(final Transaction transaction) {
         transactionRepository.put(UUID.randomUUID(), transaction);
     }
 
@@ -21,7 +21,7 @@ public class InMemoryTransactionRepository implements TransactionRepository {
     }
 
     @Override
-    public Transaction getById(UUID id) {
+    public Transaction getById(final UUID id) {
         return transactionRepository.get(id);
     }
 }

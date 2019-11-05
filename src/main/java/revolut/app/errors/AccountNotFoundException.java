@@ -1,7 +1,7 @@
 package revolut.app.errors;
 
 public class AccountNotFoundException extends ApplicationException {
-    public AccountNotFoundException(int code, String message) {
+    public AccountNotFoundException(final int code, final String message) {
         super(code, message);
     }
 }

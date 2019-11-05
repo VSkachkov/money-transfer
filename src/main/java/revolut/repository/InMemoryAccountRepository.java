@@ -18,7 +18,7 @@ public class InMemoryAccountRepository implements AccountRepository {
 
     private static final long WAIT_SEC = 1L;
 
-    public InMemoryAccountRepository(Map<UUID, Account> initialAccount) {
+    public InMemoryAccountRepository(final Map<UUID, Account> initialAccount) {
         ACCOUNT_STORE.putAll(initialAccount);
     }
 
@@ -26,14 +26,14 @@ public class InMemoryAccountRepository implements AccountRepository {
     private static final Map<UUID, Account> ACCOUNT_STORE = new ConcurrentHashMap<>();
 
     @Override
-    public Transaction transferBetweenAccounts(MoneyTransferDto transferDto) {
+    public Transaction transferBetweenAccounts(final MoneyTransferDto transferDto) {
         Status status;
 
         if (ACCOUNT_STORE.get(transferDto.getReceiverId()) == null) {
             throw new AccountNotFoundException(500, "Not found account");
         }
-        Account receiverAccount = ACCOUNT_STORE.get(transferDto.getReceiverId());
-        Account senderAccount = ACCOUNT_STORE.get(transferDto.getSenderId());
+        final Account receiverAccount = ACCOUNT_STORE.get(transferDto.getReceiverId());
+        final Account senderAccount = ACCOUNT_STORE.get(transferDto.getSenderId());
         try {
             status = Status.IN_PROCESS;
             if (senderAccount.getLock().tryLock(WAIT_SEC, TimeUnit.SECONDS)) {
@@ -53,7 +53,7 @@ public class InMemoryAccountRepository implements AccountRepository {
             } else {
                 //error waiting lock
             }
-        } catch (InterruptedException e) {
+        } catch (final InterruptedException e) {
             status = Status.FAILED_TECHNICAL_ERROR;
         } finally {
             senderAccount.getLock().unlock();
@@ -68,14 +68,11 @@ public class InMemoryAccountRepository implements AccountRepository {
     }
 
     @Override
-    public String getAll() {
-        return ACCOUNT_STORE.entrySet().toString(); //TODO fix
-    }
-
-    @Override
-    public void create(AccountDto newAccount) {
+    public void create(final AccountDto newAccount) {
         ACCOUNT_STORE.putIfAbsent(newAccount.getId(),
-                Account.builder().balance(newAccount.getBalance() != null ? newAccount.getBalance() : BigDecimal.ZERO).build());
+                Account.builder()
+                        .balance(newAccount.getBalance() != null ? newAccount.getBalance() : BigDecimal.ZERO)
+                        .build());
     }
 
     @Override
@@ -88,7 +85,12 @@ public class InMemoryAccountRepository implements AccountRepository {
                 .collect(Collectors.toList());
     }
 
-    public synchronized Account getAccountStatus(UUID client) {
+    @Override
+    public Account getById(final UUID id) {
+        return ACCOUNT_STORE.get(id);
+    }
+
+    public synchronized Account getAccountStatus(final UUID client) {
         return ACCOUNT_STORE.get(client);
     }
 

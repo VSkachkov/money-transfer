@@ -3,6 +3,7 @@ package revolut.app;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.eclipse.jetty.http.HttpStatus;
+import revolut.app.api.Constants;
 import revolut.app.errors.ResultResponse;
 import revolut.model.AccountDto;
 import revolut.model.MoneyTransferDto;
@@ -20,44 +21,39 @@ import static spark.Spark.*;
 
 
 class Application {
-    public static void main(String[] args) throws IOException {
-        Configuration configuration = new Configuration();
-        Gson gson = new Gson();
-        TransactionAccountService service = getUserService();
+    public static void main(final String[] args) {
+        final Configuration configuration = new Configuration();
+        final Gson gson = new Gson();
+        final TransactionAccountService service = getUserService();
         configSparkServer();
 
         path("/api", () -> {
-            before((req, res) -> res.type("application/json"));
-            get("/transactions", (req, res) ->{
-                return gson.toJson(service.getAllTransactions());
-            });
-            get("/transactions/:id", (req, res) ->{
-                return gson.toJson(service.getTransactionById(UUID.fromString(req.params(":id"))));
-            });
+            before((req, res) -> res.type(Constants.APPLICATION_JSON));
+            get("/transactions", (req, res) -> gson.toJson(service.getAllTransactions()));
+            get("/transactions/:id", (req, res) -> gson.toJson(service.getTransactionById(UUID.fromString(req.params(":id")))));
             post("/transactions/create", (req, res) -> {
                 final MoneyTransferDto dto = gson.fromJson(req.body(), MoneyTransferDto.class);
-                Transaction transaction = service.createTransaction(dto);
+                res.status(HttpStatus.CREATED_201);
+                final Transaction transaction = service.createTransaction(dto);
                 return gson.toJson(transaction);
             });
-            path("/accounts", () -> {
-               post("/create", (req, res) -> {
-                   Type itemsListType = new TypeToken<List<AccountDto>>() {}.getType();
-                   res.status(HttpStatus.CREATED_201);
-                   final List<AccountDto> accounts = gson.fromJson(req.body(), itemsListType);
-                   return gson.toJson(ResultResponse.builder().success(service.createAccounts(accounts)).build());
-               });
-               get("/get", (req, res) -> {
-                   return gson.toJson(service.getAccounts());
-               });
+
+            get("/accounts", (req, res) -> gson.toJson(service.getAccounts()));
+            post("/accounts/create", (req, res) -> {
+                final Type itemsListType = new TypeToken<List<AccountDto>>() {}.getType();
+                res.status(HttpStatus.CREATED_201);
+                final List<AccountDto> accounts = gson.fromJson(req.body(), itemsListType);
+                return gson.toJson(ResultResponse.builder().success(service.createAccounts(accounts)).build());
             });
+            get("/accounts/:id", (req, res) -> gson.toJson(service.getAccount(UUID.fromString(req.params(":id")))));
         });
     }
 
     private static void configSparkServer() {
-        Gson gson = new Gson();
-        before((request, response) -> response.type("application/json"));
+        final Gson gson = new Gson();
+        before((request, response) -> response.type(Constants.APPLICATION_JSON));
         before((req, res) -> {
-            String path = req.pathInfo();
+            final String path = req.pathInfo();
             if (path.endsWith("/"))
                 res.redirect(path.substring(0, path.length() - 1));
         });

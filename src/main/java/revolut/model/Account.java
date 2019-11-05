@@ -21,12 +21,12 @@ public class Account {
     @Builder.Default
     private ReentrantLock lock = new ReentrantLock();
 
-    public synchronized Account add(BigDecimal augend) {
+    public synchronized Account add(final BigDecimal augend) {
         balance = balance.add(augend);
         return this;
     }
 
-    public synchronized Account substract(BigDecimal subtrahend) {
+    public synchronized Account substract(final BigDecimal subtrahend) {
         balance = balance.subtract(subtrahend);
         return this;
     }

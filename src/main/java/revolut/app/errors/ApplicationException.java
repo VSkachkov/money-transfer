@@ -7,7 +7,7 @@ public class ApplicationException extends RuntimeException {
 
     private final int code;
 
-    ApplicationException(int code, String message) {
+    ApplicationException(final int code, final String message) {
         super(message);
         this.code = code;
     }
