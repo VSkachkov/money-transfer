@@ -1,18 +1,18 @@
 package revolut.app;
 
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import org.eclipse.jetty.http.HttpStatus;
 import revolut.app.api.Constants;
-import revolut.app.errors.ResultResponse;
+import revolut.app.api.ErrorConstants;
+import revolut.app.errors.AccountExistsException;
+import revolut.app.errors.ApplicationException;
+import revolut.model.ResultResponse;
 import revolut.model.AccountDto;
 import revolut.model.MoneyTransferDto;
 import revolut.model.Transaction;
+import revolut.model.TransactionDto;
 import revolut.service.TransactionAccountService;
 
-import java.io.IOException;
-import java.lang.reflect.Type;
-import java.util.List;
 import java.util.UUID;
 
 import static revolut.app.Configuration.getUserService;
@@ -34,16 +34,16 @@ class Application {
             post("/transactions/create", (req, res) -> {
                 final MoneyTransferDto dto = gson.fromJson(req.body(), MoneyTransferDto.class);
                 res.status(HttpStatus.CREATED_201);
-                final Transaction transaction = service.createTransaction(dto);
-                return gson.toJson(transaction);
+                final TransactionDto transactionDto = service.createTransaction(dto);
+                return gson.toJson(transactionDto);
             });
 
             get("/accounts", (req, res) -> gson.toJson(service.getAccounts()));
             post("/accounts/create", (req, res) -> {
-                final Type itemsListType = new TypeToken<List<AccountDto>>() {}.getType();
+//                final Type itemsListType = new TypeToken<List<AccountDto>>() {}.getType();
                 res.status(HttpStatus.CREATED_201);
-                final List<AccountDto> accounts = gson.fromJson(req.body(), itemsListType);
-                return gson.toJson(ResultResponse.builder().success(service.createAccounts(accounts)).build());
+                final AccountDto accountToCreate = gson.fromJson(req.body(), AccountDto.class);
+                return gson.toJson(service.createAccount(accountToCreate));
             });
             get("/accounts/:id", (req, res) -> gson.toJson(service.getAccount(UUID.fromString(req.params(":id")))));
         });
@@ -57,10 +57,22 @@ class Application {
             if (path.endsWith("/"))
                 res.redirect(path.substring(0, path.length() - 1));
         });
-        exception(Exception.class, (exception, request, response) -> {
+        exception(ApplicationException.class, (exception, request, response) -> {
+            response.status(exception.getCode());
+            response.body(gson.toJson(ResultResponse
+                    .builder()
+                    .success(false)
+                    .message(exception.getMessage())
+                    .build()));
+        });
+        exception(RuntimeException.class, (exception, request, response) -> {
             // Handle the exception here
             response.status(500);
-            response.body(gson.toJson(ResultResponse.builder().success(false).message("Internal server error")));
+            response.body(gson.toJson(ResultResponse
+                    .builder()
+                    .success(false)
+                    .message(ErrorConstants.INTERNAL_SERVER_ERROR_MSG)
+                    .build()));
         });
     }
 }

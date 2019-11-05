@@ -1,17 +1,19 @@
 package revolut.repository;
 
+import org.eclipse.jetty.http.HttpStatus;
+import revolut.app.api.ErrorConstants;
 import revolut.app.errors.AccountNotFoundException;
 import lombok.NoArgsConstructor;
+import revolut.app.errors.ApplicationException;
 import revolut.model.*;
 
 import java.math.BigDecimal;
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 @NoArgsConstructor
 public class InMemoryAccountRepository implements AccountRepository {
@@ -40,8 +42,10 @@ public class InMemoryAccountRepository implements AccountRepository {
                 try {
                     if (receiverAccount.getLock().tryLock(WAIT_SEC, TimeUnit.SECONDS)) {
                         if (senderAccount.getBalance().compareTo(transferDto.getAmount()) >= 0) {
-                            ACCOUNT_STORE.computeIfPresent(transferDto.getSenderId(), (key, val) -> val.substract(transferDto.getAmount()));
-                            ACCOUNT_STORE.computeIfPresent(transferDto.getReceiverId(), (key, val) -> val.add(transferDto.getAmount()));
+                            ACCOUNT_STORE.computeIfPresent(transferDto.getSenderId(),
+                                    (key, val) -> val.substract(transferDto.getAmount()));
+                            ACCOUNT_STORE.computeIfPresent(transferDto.getReceiverId(),
+                                    (key, val) -> val.add(transferDto.getAmount()));
                             status = Status.COMPLETED;
                         } else {
                             status = Status.FAILED_SENDER_HAS_NOT_ENOUGH_MONEY;
@@ -51,7 +55,7 @@ public class InMemoryAccountRepository implements AccountRepository {
                     receiverAccount.getLock().unlock();
                 }
             } else {
-                //error waiting lock
+                //error waiting lock // TODO
             }
         } catch (final InterruptedException e) {
             status = Status.FAILED_TECHNICAL_ERROR;
@@ -68,21 +72,19 @@ public class InMemoryAccountRepository implements AccountRepository {
     }
 
     @Override
-    public void create(final AccountDto newAccount) {
-        ACCOUNT_STORE.putIfAbsent(newAccount.getId(),
-                Account.builder()
-                        .balance(newAccount.getBalance() != null ? newAccount.getBalance() : BigDecimal.ZERO)
-                        .build());
+    public Account create(final AccountDto newAccountDto) {
+        final Account newAccount = Account.builder().balance(
+                newAccountDto.getBalance() != null ? newAccountDto.getBalance() : BigDecimal.ZERO)
+                .build();
+        if (ACCOUNT_STORE.putIfAbsent(newAccountDto.getId(), newAccount) != null) {
+            throw new ApplicationException(HttpStatus.BAD_REQUEST_400, ErrorConstants.ACCOUNT_EXISTS_MSG);
+        }
+        return newAccount;
     }
 
     @Override
-    public List<AccountDto> getAccounts() {
-        return ACCOUNT_STORE.entrySet().stream()
-                .map(account -> AccountDto.builder()
-                        .id(account.getKey())
-                        .balance(account.getValue().getBalance())
-                        .build())
-                .collect(Collectors.toList());
+    public Set<Map.Entry<UUID, Account>> getAccounts() {
+        return ACCOUNT_STORE.entrySet();
     }
 
     @Override

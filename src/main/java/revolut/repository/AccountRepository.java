@@ -5,16 +5,17 @@ import revolut.model.AccountDto;
 import revolut.model.MoneyTransferDto;
 import revolut.model.Transaction;
 
-import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 public interface AccountRepository {
 
     Transaction transferBetweenAccounts(MoneyTransferDto transferDto);
 
-    void create(AccountDto account);
+    Account create(AccountDto account);
 
-    List<AccountDto> getAccounts();
+    Set<Map.Entry<UUID, Account>> getAccounts();
 
     Account getById(UUID id);
 }
