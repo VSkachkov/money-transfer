@@ -1,4 +1,4 @@
-package revolut.app.errors;
+package revolut.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

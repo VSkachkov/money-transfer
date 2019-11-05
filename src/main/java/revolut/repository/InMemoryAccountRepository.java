@@ -1,24 +1,26 @@
 package revolut.repository;
 
+import org.eclipse.jetty.http.HttpStatus;
+import revolut.app.api.ErrorConstants;
 import revolut.app.errors.AccountNotFoundException;
 import lombok.NoArgsConstructor;
+import revolut.app.errors.ApplicationException;
 import revolut.model.*;
 
 import java.math.BigDecimal;
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 @NoArgsConstructor
 public class InMemoryAccountRepository implements AccountRepository {
 
     private static final long WAIT_SEC = 1L;
 
-    public InMemoryAccountRepository(Map<UUID, Account> initialAccount) {
+    public InMemoryAccountRepository(final Map<UUID, Account> initialAccount) {
         ACCOUNT_STORE.putAll(initialAccount);
     }
 
@@ -26,22 +28,24 @@ public class InMemoryAccountRepository implements AccountRepository {
     private static final Map<UUID, Account> ACCOUNT_STORE = new ConcurrentHashMap<>();
 
     @Override
-    public Transaction transferBetweenAccounts(MoneyTransferDto transferDto) {
+    public Transaction transferBetweenAccounts(final MoneyTransferDto transferDto) {
         Status status;
 
         if (ACCOUNT_STORE.get(transferDto.getReceiverId()) == null) {
             throw new AccountNotFoundException(500, "Not found account");
         }
-        Account receiverAccount = ACCOUNT_STORE.get(transferDto.getReceiverId());
-        Account senderAccount = ACCOUNT_STORE.get(transferDto.getSenderId());
+        final Account receiverAccount = ACCOUNT_STORE.get(transferDto.getReceiverId());
+        final Account senderAccount = ACCOUNT_STORE.get(transferDto.getSenderId());
         try {
             status = Status.IN_PROCESS;
             if (senderAccount.getLock().tryLock(WAIT_SEC, TimeUnit.SECONDS)) {
                 try {
                     if (receiverAccount.getLock().tryLock(WAIT_SEC, TimeUnit.SECONDS)) {
                         if (senderAccount.getBalance().compareTo(transferDto.getAmount()) >= 0) {
-                            ACCOUNT_STORE.computeIfPresent(transferDto.getSenderId(), (key, val) -> val.substract(transferDto.getAmount()));
-                            ACCOUNT_STORE.computeIfPresent(transferDto.getReceiverId(), (key, val) -> val.add(transferDto.getAmount()));
+                            ACCOUNT_STORE.computeIfPresent(transferDto.getSenderId(),
+                                    (key, val) -> val.substract(transferDto.getAmount()));
+                            ACCOUNT_STORE.computeIfPresent(transferDto.getReceiverId(),
+                                    (key, val) -> val.add(transferDto.getAmount()));
                             status = Status.COMPLETED;
                         } else {
                             status = Status.FAILED_SENDER_HAS_NOT_ENOUGH_MONEY;
@@ -51,9 +55,9 @@ public class InMemoryAccountRepository implements AccountRepository {
                     receiverAccount.getLock().unlock();
                 }
             } else {
-                //error waiting lock
+                //error waiting lock // TODO
             }
-        } catch (InterruptedException e) {
+        } catch (final InterruptedException e) {
             status = Status.FAILED_TECHNICAL_ERROR;
         } finally {
             senderAccount.getLock().unlock();
@@ -68,27 +72,27 @@ public class InMemoryAccountRepository implements AccountRepository {
     }
 
     @Override
-    public String getAll() {
-        return ACCOUNT_STORE.entrySet().toString(); //TODO fix
+    public Account create(final AccountDto newAccountDto) {
+        final Account newAccount = Account.builder().balance(
+                newAccountDto.getBalance() != null ? newAccountDto.getBalance() : BigDecimal.ZERO)
+                .build();
+        if (ACCOUNT_STORE.putIfAbsent(newAccountDto.getId(), newAccount) != null) {
+            throw new ApplicationException(HttpStatus.BAD_REQUEST_400, ErrorConstants.ACCOUNT_EXISTS_MSG);
+        }
+        return newAccount;
     }
 
     @Override
-    public void create(AccountDto newAccount) {
-        ACCOUNT_STORE.putIfAbsent(newAccount.getId(),
-                Account.builder().balance(newAccount.getBalance() != null ? newAccount.getBalance() : BigDecimal.ZERO).build());
+    public Set<Map.Entry<UUID, Account>> getAccounts() {
+        return ACCOUNT_STORE.entrySet();
     }
 
     @Override
-    public List<AccountDto> getAccounts() {
-        return ACCOUNT_STORE.entrySet().stream()
-                .map(account -> AccountDto.builder()
-                        .id(account.getKey())
-                        .balance(account.getValue().getBalance())
-                        .build())
-                .collect(Collectors.toList());
+    public Account getById(final UUID id) {
+        return ACCOUNT_STORE.get(id);
     }
 
-    public synchronized Account getAccountStatus(UUID client) {
+    public synchronized Account getAccountStatus(final UUID client) {
         return ACCOUNT_STORE.get(client);
     }
 

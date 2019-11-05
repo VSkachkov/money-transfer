@@ -1,10 +1,13 @@
 package revolut.service;
 
 import lombok.AllArgsConstructor;
+import revolut.converter.AccountConverter;
 import revolut.model.*;
 import revolut.converter.TransactionConverter;
 import revolut.repository.AccountRepository;
 import revolut.repository.TransactionRepository;
+import revolut.validator.AccountValidator;
+import revolut.validator.TransactionValidator;
 
 import java.util.List;
 import java.util.UUID;
@@ -16,11 +19,15 @@ public class TransactionAccountService {
     private final AccountRepository accountRepository;
     private final TransactionRepository transactionRepository;
     private final TransactionConverter transactionConverter = new TransactionConverter();
+    private final AccountConverter accountConverter = new AccountConverter();
+    private final TransactionValidator transactionValidator = new TransactionValidator();
+    private final AccountValidator accountValidator = new AccountValidator();
 
-    public Transaction createTransaction(MoneyTransferDto transferDto) {
-        Transaction transaction = accountRepository.transferBetweenAccounts(transferDto);
-        transactionRepository.save(transaction);
-        return transaction;
+    public TransactionDto createTransaction(final MoneyTransferDto transferDto) {
+        final Transaction transaction = accountRepository.transferBetweenAccounts(transferDto);
+        final UUID transactionId = UUID.randomUUID(); //TODO think what to do with transactions
+        transactionRepository.save(transactionId, transaction);
+        return transactionConverter.convert(transactionId, transaction);
     }
 
     public List<TransactionDto> getAllTransactions() {
@@ -30,20 +37,30 @@ public class TransactionAccountService {
                 .collect(Collectors.toList());
     }
 
-    public boolean createAccounts(List<AccountDto> accounts) {
-        for (AccountDto account  :
-                accounts) {
-            accountRepository.create(account);
-        }
-        return true; //TODO what is purpose to return true?
+    public AccountDto createAccount(final AccountDto newAccount) {
+        accountValidator.validateNewAccount(newAccount);
+        final Account created = accountRepository.create(newAccount);
+        return AccountDto.builder()
+                .id(newAccount.getId())
+                .currency(created.getCurrency())
+                .balance(created.getBalance())
+                .build();
+
     }
 
     public List<AccountDto> getAccounts() {
-        return accountRepository.getAccounts();
+        return accountRepository.getAccounts()
+                .stream()
+                .map(entry -> accountConverter.convert(entry.getKey(), entry.getValue()))
+                .collect(Collectors.toList());
     }
 
-    public TransactionDto getTransactionById(UUID id) {
+    public TransactionDto getTransactionById(final UUID id) {
         return
                 transactionConverter.convert(id, transactionRepository.getById(id));
+    }
+
+    public AccountDto getAccount(final UUID id) {
+        return accountConverter.convert(id, accountRepository.getById(id));
     }
 }

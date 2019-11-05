@@ -11,6 +11,7 @@ import java.util.UUID;
 @Data
 @Builder
 public class MoneyTransferDto {
+    private UUID transactionId;
     private UUID receiverId;
     private UUID senderId;
     private BigDecimal amount;
