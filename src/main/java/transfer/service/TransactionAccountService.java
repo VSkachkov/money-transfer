@@ -25,7 +25,7 @@ public class TransactionAccountService {
 
     public TransactionDto createTransaction(final MoneyTransferDto transferDto) {
         final Transaction transaction = accountRepository.transferBetweenAccounts(transferDto);
-        final UUID transactionId = UUID.randomUUID(); //TODO think what to do with transactions
+        final UUID transactionId = UUID.randomUUID();
         transactionRepository.save(transactionId, transaction);
         return transactionConverter.convert(transactionId, transaction);
     }
@@ -56,8 +56,7 @@ public class TransactionAccountService {
     }
 
     public TransactionDto getTransactionById(final UUID id) {
-        return
-                transactionConverter.convert(id, transactionRepository.getById(id));
+        return transactionConverter.convert(id, transactionRepository.getById(id));
     }
 
     public AccountDto getAccount(final UUID id) {
