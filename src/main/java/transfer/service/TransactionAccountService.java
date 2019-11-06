@@ -26,26 +26,15 @@ public class TransactionAccountService {
     private final TransactionValidator transactionValidator = new TransactionValidator();
     private final AccountValidator accountValidator = new AccountValidator();
 
-//    public TransactionDto createTransaction(final MoneyTransferDto transferDto) {
-//        final Transaction transaction = accountRepository.transferBetweenAccounts(transferDto);
-//        final UUID transactionId = UUID.randomUUID();
-//        transactionRepository.save(transactionId, transaction);
-//        return transactionConverter.convert(transactionId, transaction);
-//    }
-
     public TransactionDto createTransaction(final MoneyTransferDto transferDto) {
-        transactionValidator.validate(transferDto);
+        transactionValidator.validateNewTransferRequest(transferDto);
         final Account receiver = accountRepository.getById(transferDto.getReceiverId());
         final Account sender = accountRepository.getById(transferDto.getSenderId());
-        final Transaction transaction = Transaction
-                .builder()
-                .transactionId(transferDto.getTransactionId())
-                .sender(sender)
-                .receiver(receiver)
-                .transactionStatus(Status.IN_PROCESS)
-                .amount(transferDto.getAmount())
-                .build();
-        transactionRepository.save(transferDto.getTransactionId(), transaction);
+        final Transaction transaction = Transaction.builder().transactionId(transferDto.getTransactionId())
+                .sender(sender).receiver(receiver).transactionStatus(Status.IN_PROCESS)
+                .amount(transferDto.getAmount()).build();
+        final Transaction created = transactionRepository.save(transferDto.getTransactionId(), transaction);
+        transactionValidator.validateTransactionExistence(created);
         try {
             if (transaction.getLock().tryLock(WAIT_SEC, TimeUnit.SECONDS)) {
                 try {

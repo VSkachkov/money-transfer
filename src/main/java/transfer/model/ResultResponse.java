@@ -8,8 +8,6 @@ import lombok.Getter;
 @Builder
 @AllArgsConstructor
 public class ResultResponse {
-
-    int code;
     boolean success;
     String message;
 }

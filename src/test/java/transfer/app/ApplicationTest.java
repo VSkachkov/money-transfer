@@ -1,34 +1,38 @@
 package transfer.app;
 
+import com.google.gson.Gson;
+import org.eclipse.jetty.http.HttpStatus;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import static org.asynchttpclient.Dsl.asyncHttpClient;
 import static org.junit.Assert.*;
 import org.asynchttpclient.*;
+import transfer.model.AccountDto;
+import transfer.model.MoneyTransferDto;
 
 public class ApplicationTest {
 
     private static AsyncHttpClient asyncHttpClient;
-    final String newAccounts = "[\n" +
-            "\t{\n" +
-            "\t\t\"id\": \"0a93076c-f18c-46cf-8735-3cf742245d80\", \n" +
-            "\t\t\"balance\": \"100\"\n" +
-            "\t}, \n" +
-            "\t{\n" +
-            "\t\t\"id\": \"a9ef647c-5d40-4423-b5ee-cf08d6300117\", \n" +
-            "\t\t\"balance\": \"200\"\n" +
-            "\t}\n" +
-            "]";
+    private final UUID accountId1 = UUID.randomUUID();
+    private final UUID accountId2 = UUID.randomUUID();
+    private final BigDecimal accBalance1 = BigDecimal.valueOf(100);
+    private final BigDecimal accBalance2 = BigDecimal.valueOf(100);
+    private AccountDto acc1 = AccountDto.builder().id(accountId1).balance(accBalance1).build();
+    private AccountDto acc2 = AccountDto.builder().id(accountId2).balance(accBalance2).build();
+    private Gson gson = new Gson();
+
     final String oneTransfer = "{\n" +
             "    \"receiverId\": \"a9ef647c-5d40-4423-b5ee-cf08d6300117\",\n" +
             "    \"senderId\": \"0a93076c-f18c-46cf-8735-3cf742245d80\",\n" +
@@ -41,7 +45,7 @@ public class ApplicationTest {
             "}";
 
     @Before
-    public void init()  throws IOException, InterruptedException, ExecutionException {
+    public void init() {
         Application.main(null);
         asyncHttpClient = asyncHttpClient();
     }
@@ -53,38 +57,47 @@ public class ApplicationTest {
 
     @Test
     public void main() throws IOException, InterruptedException {
-//        Application.main(null);
-        HttpClient client = HttpClient.newHttpClient();
-        HttpRequest request = HttpRequest.newBuilder()
+        final HttpClient client = HttpClient.newHttpClient();
+        final HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create("http://localhost:4567/api/accounts"))
                 .build();
-        HttpResponse<String> response =
+        final HttpResponse<String> response =
                 client.send(request, HttpResponse.BodyHandlers.ofString());
 
-        System.out.println(response.body());
+       System.out.println(response.body());
     }
 
     @Test
     public void usingAsyncClient() throws InterruptedException, ExecutionException {
-        Future<Response> whenResponse = asyncHttpClient.prepareGet("http://localhost:4567/api/accounts").execute();
-        Response response = whenResponse.get();
+        final Future<Response> whenResponse = asyncHttpClient.prepareGet("http://localhost:4567/api/accounts").execute();
+        final Response response = whenResponse.get();
         assertEquals("[]", response.getResponseBody());
     }
 
     @Test
     public void createAccounts() throws InterruptedException, ExecutionException {
-
-        Future<Response> whenResponse = asyncHttpClient.preparePost("http://localhost:4567/api/accounts/create")
-                .setBody(newAccounts)
-                .setHeader("Content-Type", "application/json")
+        final String acc1String = gson.toJson(acc1);
+        final String acc2String = gson.toJson(acc2);
+        final Future<Response> account1CreateResponse = asyncHttpClient.preparePost("http://localhost:4567/api/accounts/create")
+                .setBody(acc1String)
                 .execute(new AsyncCompletionHandler<Response>() {
                     @Override
-                    public Response onCompleted(Response response) throws Exception {
+                    public Response onCompleted(final Response response) throws Exception {
                         return response;
                     }
                 });
-        Response response = whenResponse.get();
-        assertEquals("{\"code\":0,\"success\":true}", response.getResponseBody());
+        final Future<Response> account2CreateResponse = asyncHttpClient.preparePost("http://localhost:4567/api/accounts/create")
+                .setBody(acc2String)
+                .execute(new AsyncCompletionHandler<Response>() {
+                    @Override
+                    public Response onCompleted(final Response response) throws Exception {
+                        return response;
+                    }
+                });
+        final Response response = account1CreateResponse.get();
+        final Response response2 = account2CreateResponse.get();
+        assertEquals(acc1String, response.getResponseBody());
+        assertEquals(acc2String, response2.getResponseBody());
     }
 
     @Test
@@ -92,10 +105,9 @@ public class ApplicationTest {
         createAccounts();
         Future<Response> whenResponse = null;
         Future<Response> whenResponse2 = null;
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 1; i++) {
             whenResponse = asyncHttpClient.preparePost("http://localhost:4567/api/transactions/create")
-                    .setBody(oneTransfer)
-                    .setHeader("Content-Type", "application/json")
+                    .setBody(gson.toJson(MoneyTransferDto.builder().transactionId(UUID.randomUUID()).amount(BigDecimal.ONE).senderId(accountId1).receiverId(accountId2).build()))
                     .execute(
                             new AsyncCompletionHandler<Response>() {
                         @Override
@@ -105,8 +117,7 @@ public class ApplicationTest {
                     }
                     );
             whenResponse2 = asyncHttpClient.preparePost("http://localhost:4567/api/transactions/create")
-                    .setBody(secondTransfer)
-                    .setHeader("Content-Type", "application/json")
+                    .setBody(gson.toJson(MoneyTransferDto.builder().transactionId(UUID.randomUUID()).amount(BigDecimal.ONE).senderId(accountId2).receiverId(accountId1).build()))
                     .execute(
                             new AsyncCompletionHandler<Response>() {
                         @Override
@@ -117,8 +128,10 @@ public class ApplicationTest {
                     );
         }
 
-        Response response = whenResponse.get();
-        Response response2 = whenResponse2.get();
+        final Response response = whenResponse.get();
+        assertTrue(response.getStatusCode() == HttpStatus.CREATED_201);
+        final Response response2 = whenResponse2.get();
+        assertTrue(response2.getStatusCode() == HttpStatus.CREATED_201);
         System.out.println(response.getResponseBody());
         System.out.println(response2.getResponseBody());
         Thread.sleep(1000);
