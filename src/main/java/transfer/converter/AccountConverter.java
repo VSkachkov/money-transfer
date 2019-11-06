@@ -1,5 +1,8 @@
 package transfer.converter;
 
+import org.eclipse.jetty.http.HttpStatus;
+import transfer.constants.ErrorConstants;
+import transfer.errors.ApplicationException;
 import transfer.model.Account;
 import transfer.model.AccountDto;
 
@@ -17,7 +20,7 @@ public class AccountConverter {
      */
     public AccountDto convert(final UUID id, final Account account) {
         if (id == null || account == null) {
-            return null;
+            throw new ApplicationException(HttpStatus.NOT_FOUND_404, ErrorConstants.REQUESTED_DATA_NOT_FOUND);
         }
         return AccountDto.builder()
                 .id(id)

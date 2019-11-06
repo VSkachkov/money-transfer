@@ -1,5 +1,8 @@
 package transfer.converter;
 
+import org.eclipse.jetty.http.HttpStatus;
+import transfer.constants.ErrorConstants;
+import transfer.errors.ApplicationException;
 import transfer.model.Transaction;
 import transfer.model.TransactionDto;
 
@@ -19,7 +22,7 @@ public class TransactionConverter {
      */
     public TransactionDto convert(final UUID id, final Transaction transaction) {
         if (transaction == null || id == null) {
-            return null;
+            throw new ApplicationException(HttpStatus.NOT_FOUND_404, ErrorConstants.REQUESTED_DATA_NOT_FOUND);
         }
         return TransactionDto.builder()
                 .transactionId(id)

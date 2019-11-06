@@ -27,22 +27,11 @@ public class ApplicationTest {
     private static AsyncHttpClient asyncHttpClient;
     private final UUID accountId1 = UUID.randomUUID();
     private final UUID accountId2 = UUID.randomUUID();
-    private final BigDecimal accBalance1 = BigDecimal.valueOf(100);
-    private final BigDecimal accBalance2 = BigDecimal.valueOf(100);
-    private AccountDto acc1 = AccountDto.builder().id(accountId1).balance(accBalance1).build();
-    private AccountDto acc2 = AccountDto.builder().id(accountId2).balance(accBalance2).build();
+    private final BigDecimal initBalance1 = BigDecimal.valueOf(100);
+    private final BigDecimal initBalance2 = BigDecimal.valueOf(100);
+    private AccountDto acc1 = AccountDto.builder().id(accountId1).balance(initBalance1).build();
+    private AccountDto acc2 = AccountDto.builder().id(accountId2).balance(initBalance2).build();
     private Gson gson = new Gson();
-
-    final String oneTransfer = "{\n" +
-            "    \"receiverId\": \"a9ef647c-5d40-4423-b5ee-cf08d6300117\",\n" +
-            "    \"senderId\": \"0a93076c-f18c-46cf-8735-3cf742245d80\",\n" +
-            "    \"amount\": \"1\"\n" +
-            "}";
-    final String secondTransfer = "{\n" +
-            "    \"senderId\": \"a9ef647c-5d40-4423-b5ee-cf08d6300117\",\n" +
-            "    \"receiverId\": \"0a93076c-f18c-46cf-8735-3cf742245d80\",\n" +
-            "    \"amount\": \"1\"\n" +
-            "}";
 
     @Before
     public void init() {
@@ -105,7 +94,7 @@ public class ApplicationTest {
         createAccounts();
         Future<Response> whenResponse = null;
         Future<Response> whenResponse2 = null;
-        for (int i = 0; i < 1; i++) {
+        for (int i = 0; i < 100; i++) {
             whenResponse = asyncHttpClient.preparePost("http://localhost:4567/api/transactions/create")
                     .setBody(gson.toJson(MoneyTransferDto.builder().transactionId(UUID.randomUUID()).amount(BigDecimal.ONE).senderId(accountId1).receiverId(accountId2).build()))
                     .execute(
@@ -132,15 +121,27 @@ public class ApplicationTest {
         assertTrue(response.getStatusCode() == HttpStatus.CREATED_201);
         final Response response2 = whenResponse2.get();
         assertTrue(response2.getStatusCode() == HttpStatus.CREATED_201);
-        System.out.println(response.getResponseBody());
-        System.out.println(response2.getResponseBody());
         Thread.sleep(1000);
 
-        Future<Response> allAccountsResponseFuture = asyncHttpClient.prepareGet("http://localhost:4567/api/accounts").execute();
-
-        Response response3 = allAccountsResponseFuture.get();
-        System.out.println("Program Result: " + response3.getResponseBody());
+        final AccountDto acc1StatePostRequests = getAccount(accountId1);
+        final AccountDto acc2StatePostRequests = getAccount(accountId2);
+        assertTrue((acc1StatePostRequests.getBalance().add(acc2StatePostRequests.getBalance())).equals(initBalance1
+                .add(initBalance2)));
         asyncHttpClient.close();
+    }
 
+    private AccountDto getAccount (final UUID id) throws InterruptedException, ExecutionException {
+        Future<Response> whenResponse = null;
+        whenResponse = asyncHttpClient.prepareGet("http://localhost:4567/api/accounts/" + id)
+                .execute(
+                        new AsyncCompletionHandler<Response>() {
+                            @Override
+                            public Response onCompleted(Response response) throws Exception {
+                                return response;
+                            }
+                        }
+                );
+        final Response response = whenResponse.get();
+        return (gson.fromJson(response.getResponseBody(), AccountDto.class));
     }
 }
