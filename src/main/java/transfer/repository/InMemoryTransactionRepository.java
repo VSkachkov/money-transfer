@@ -12,7 +12,7 @@ public class InMemoryTransactionRepository implements TransactionRepository {
     private Map<UUID, Transaction> transactionRepository = new ConcurrentHashMap();
     @Override
     public void save(final UUID id, final Transaction transaction) {
-        transactionRepository.put(id, transaction);
+        transactionRepository.putIfAbsent(id, transaction);
     }
 
     @Override

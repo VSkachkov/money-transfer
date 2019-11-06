@@ -16,18 +16,18 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 public class InMemoryTransactionRepositoryTest {
-    UUID user1 = UUID.randomUUID();
-    UUID user2 = UUID.randomUUID();
-    BigDecimal one = BigDecimal.ONE; //TODO java is pass-by-value
-    MoneyTransferDto transferDto1 = MoneyTransferDto.builder().receiverId(user1).senderId(user2).amount(one).build();
-    MoneyTransferDto transferDto2 = MoneyTransferDto.builder().receiverId(user2).senderId(user1).amount(one).build();
+    private UUID user1 = UUID.randomUUID();
+    private UUID user2 = UUID.randomUUID();
+    private BigDecimal one = BigDecimal.ONE; //TODO java is pass-by-value
+    private MoneyTransferDto transferDto1 = MoneyTransferDto.builder().receiverId(user1).senderId(user2).amount(one).build();
+    private MoneyTransferDto transferDto2 = MoneyTransferDto.builder().receiverId(user2).senderId(user1).amount(one).build();
     InMemoryAccountRepository repository;
 
     @Before
-    public void setUp() throws Exception {
-        Account account1 = Account.builder().balance(BigDecimal.TEN).build();
-        Account account2 = Account.builder().balance(BigDecimal.TEN).build();
-        Map<UUID, Account> initial = new HashMap<>();
+    public void setUp() {
+        final Account account1 = Account.builder().balance(BigDecimal.TEN).build();
+        final Account account2 = Account.builder().balance(BigDecimal.TEN).build();
+        final Map<UUID, Account> initial = new HashMap<>();
         initial.put(user1, account1);
         initial.put(user2, account2);
         repository = new InMemoryAccountRepository(initial);
@@ -46,7 +46,7 @@ public class InMemoryTransactionRepositoryTest {
     public void test() throws InterruptedException {
 
         Assert.assertEquals(BigDecimal.valueOf(20), repository.getSum());
-        ExecutorService exec =
+        final ExecutorService exec =
                 Executors.newCachedThreadPool();
         for (int i = 0; i < 10; i++) {
             exec.execute(new MoneyChecker(repository));
@@ -58,7 +58,7 @@ public class InMemoryTransactionRepositoryTest {
     class MoneyChecker implements Runnable {
         InMemoryAccountRepository repository;
 
-        MoneyChecker(InMemoryAccountRepository repository) {
+        MoneyChecker(final InMemoryAccountRepository repository) {
             this.repository = repository;
         }
 
