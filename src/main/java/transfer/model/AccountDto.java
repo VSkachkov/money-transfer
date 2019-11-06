@@ -7,6 +7,10 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.util.UUID;
+
+/**
+ * Account DTO class
+ */
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder

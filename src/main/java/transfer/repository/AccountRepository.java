@@ -9,9 +9,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+/**
+ * Account repository interface
+ */
 public interface AccountRepository {
-
-    Transaction transferBetweenAccounts(MoneyTransferDto transferDto);
 
     Account create(AccountDto account);
 

@@ -1,6 +1,6 @@
 package transfer.model;
 
-public enum Currency {
+public enum Currency { // TODO
     EUR,
     USD,
     GBP,

@@ -9,6 +9,9 @@ import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.locks.ReentrantLock;
 
+/**
+ * Class for transaction entity
+ */
 @Builder
 @Getter
 public class Transaction {

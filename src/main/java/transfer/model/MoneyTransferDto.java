@@ -7,6 +7,9 @@ import lombok.Getter;
 import java.math.BigDecimal;
 import java.util.UUID;
 
+/**
+ * Money transfer DTO class
+ */
 @Getter
 @Data
 @Builder

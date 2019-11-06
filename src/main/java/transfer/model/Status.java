@@ -1,5 +1,8 @@
 package transfer.model;
 
+/**
+ * Class that represents transaction status process
+ */
 public enum Status {
     IN_PROCESS,
     COMPLETED,
