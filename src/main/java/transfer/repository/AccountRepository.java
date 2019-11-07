@@ -8,6 +8,7 @@ import transfer.model.Transaction;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.BiFunction;
 
 /**
  * Account repository interface
@@ -19,4 +20,6 @@ public interface AccountRepository {
     Set<Map.Entry<UUID, Account>> getAccounts();
 
     Account getById(UUID id);
+
+    Account computeIfPresent(final UUID key, BiFunction<? super UUID, ? super Account, ? extends Account> remappingFunction);
 }

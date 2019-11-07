@@ -2,6 +2,8 @@ package transfer.app;
 
 import com.google.gson.Gson;
 import org.eclipse.jetty.http.HttpStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import transfer.constants.Constants;
 import transfer.constants.ErrorConstants;
 import transfer.errors.ApplicationException;
@@ -19,8 +21,11 @@ import static spark.Spark.*;
 
 
 class Application {
+    private static final Logger log = LoggerFactory.getLogger(Application.class);
+
     private static final Gson gson = new Gson();
     public static void main(final String[] args) {
+        log.info("Initialization started");
         configSparkServer();
         configExceptions();
         configEndpoints();
@@ -30,6 +35,7 @@ class Application {
      * Configures endpoints of Spark Server
      */
     private static void configEndpoints() {
+        log.info("Configuring endpoints");
         final TransactionAccountService service = getTransactionAccountService();
         path("/api", () -> {
             before((req, res) -> res.type(Constants.APPLICATION_JSON));
@@ -70,6 +76,7 @@ class Application {
      */
     private static void configExceptions() {
         exception(ApplicationException.class, (exception, request, response) -> {
+            log.error("Application exception occured" + exception.getMessage());
             response.status(exception.getCode());
             response.body(gson.toJson(ResultResponse
                     .builder()
@@ -79,6 +86,7 @@ class Application {
         });
         //for any unexpected exception response with Http status 500
         exception(RuntimeException.class, (exception, request, response) -> {
+            log.error("Runtime  exception occured: ", exception.getMessage());
             response.status(500);
             response.body(gson.toJson(ResultResponse
                     .builder()

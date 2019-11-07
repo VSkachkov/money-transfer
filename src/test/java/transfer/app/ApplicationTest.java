@@ -27,15 +27,17 @@ public class ApplicationTest {
     private static AsyncHttpClient asyncHttpClient;
     private final UUID accountId1 = UUID.randomUUID();
     private final UUID accountId2 = UUID.randomUUID();
+    private final UUID accountId3 = UUID.randomUUID();
     private final BigDecimal initBalance1 = BigDecimal.valueOf(100);
     private final BigDecimal initBalance2 = BigDecimal.valueOf(100);
+    private final BigDecimal initBalance3 = BigDecimal.valueOf(200);
     private AccountDto acc1 = AccountDto.builder().id(accountId1).balance(initBalance1).build();
     private AccountDto acc2 = AccountDto.builder().id(accountId2).balance(initBalance2).build();
+    private AccountDto acc3 = AccountDto.builder().id(accountId3).balance(initBalance3).build();
     private Gson gson = new Gson();
 
     @Before
     public void init() {
-        Application.main(null);
         asyncHttpClient = asyncHttpClient();
     }
 
@@ -45,7 +47,8 @@ public class ApplicationTest {
     }
 
     @Test
-    public void main() throws IOException, InterruptedException {
+    public void usingSimpleHttpClient() throws IOException, InterruptedException {
+        Application.main(null);
         final HttpClient client = HttpClient.newHttpClient();
         final HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create("http://localhost:4567/api/accounts"))
@@ -58,13 +61,26 @@ public class ApplicationTest {
 
     @Test
     public void usingAsyncClient() throws InterruptedException, ExecutionException {
+        Application.main(null);
+        final String acc3String = gson.toJson(acc3);
+        final Future<Response> account1CreateResponse = asyncHttpClient.preparePost("http://localhost:4567/api/accounts/create")
+                .setBody(acc3String)
+                .execute(new AsyncCompletionHandler<Response>() {
+                    @Override
+                    public Response onCompleted(final Response response) throws Exception {
+                        return response;
+                    }
+                });
+        final Response responseCreation = account1CreateResponse.get();
+        assertEquals(acc3String, responseCreation.getResponseBody());
         final Future<Response> whenResponse = asyncHttpClient.prepareGet("http://localhost:4567/api/accounts").execute();
         final Response response = whenResponse.get();
-        assertEquals("[]", response.getResponseBody());
+        assertTrue(response.getResponseBody().contains(accountId3.toString()));
     }
 
     @Test
     public void createAccounts() throws InterruptedException, ExecutionException {
+        Application.main(null);
         final String acc1String = gson.toJson(acc1);
         final String acc2String = gson.toJson(acc2);
         final Future<Response> account1CreateResponse = asyncHttpClient.preparePost("http://localhost:4567/api/accounts/create")
@@ -94,7 +110,7 @@ public class ApplicationTest {
         createAccounts();
         Future<Response> whenResponse = null;
         Future<Response> whenResponse2 = null;
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 10; i++) {
             whenResponse = asyncHttpClient.preparePost("http://localhost:4567/api/transactions/create")
                     .setBody(gson.toJson(MoneyTransferDto.builder().transactionId(UUID.randomUUID()).amount(BigDecimal.ONE).senderId(accountId1).receiverId(accountId2).build()))
                     .execute(
@@ -118,16 +134,18 @@ public class ApplicationTest {
         }
 
         final Response response = whenResponse.get();
-        assertTrue(response.getStatusCode() == HttpStatus.CREATED_201);
+        assertEquals(response.getStatusCode(), HttpStatus.CREATED_201);
         final Response response2 = whenResponse2.get();
-        assertTrue(response2.getStatusCode() == HttpStatus.CREATED_201);
-        Thread.sleep(1000);
+        assertEquals(response2.getStatusCode(), HttpStatus.CREATED_201);
 
         final AccountDto acc1StatePostRequests = getAccount(accountId1);
         final AccountDto acc2StatePostRequests = getAccount(accountId2);
-        assertTrue((acc1StatePostRequests.getBalance().add(acc2StatePostRequests.getBalance())).equals(initBalance1
-                .add(initBalance2)));
-        asyncHttpClient.close();
+        final BigDecimal finalBalance1 = acc1StatePostRequests.getBalance();
+        final BigDecimal finalBalance2 = acc2StatePostRequests.getBalance();
+        System.out.println("Final balance 1:" + finalBalance1);
+        System.out.println("Final balance 2:" + finalBalance2);
+        assertEquals((initBalance1.add(initBalance2)),
+                (finalBalance1.add(finalBalance2)));
     }
 
     private AccountDto getAccount (final UUID id) throws InterruptedException, ExecutionException {

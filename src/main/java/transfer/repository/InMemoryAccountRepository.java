@@ -13,6 +13,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
 
 @NoArgsConstructor
 public class InMemoryAccountRepository implements AccountRepository {
@@ -56,5 +57,9 @@ public class InMemoryAccountRepository implements AccountRepository {
                 .stream()
                 .map(Account::getBalance)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    public Account computeIfPresent(final UUID key, BiFunction<? super UUID, ? super Account, ? extends Account> remappingFunction) {
+        return ACCOUNT_STORE.computeIfPresent(key, remappingFunction);
     }
 }
