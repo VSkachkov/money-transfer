@@ -22,3 +22,31 @@ Technology stack used:
 5) GSON for JSON serialization
 
 Postman collection with sample requests attached
+
+Endpoints:
+1) Create account:
+POST http://localhost:4567/api/accounts/create
+Body:
+{
+	"id": "9e6d95bb-f78a-4723-b532-c9af05e01fa1",
+	"balance": "100"
+}
+
+2) Create transaction (transactionId should be unique to avoid accidental duplicate transactions:
+POST http://localhost:4567/api/transactions/create
+Body:
+{
+	"transactionId": "19fa2d47-4132-40b2-9b2c-68074c6b5675",
+	"receiverId": "9e6d95bb-f78a-4723-b532-c9af05e01fa1",
+	"senderId": "5ed7c238-37cf-4528-845a-f5ad4e2ab6f1",
+	"amount": "1"
+}
+
+3) Get all transactions:
+GET http://localhost:4567/api/accounts
+
+4) Get transaction by id:
+GET http://localhost:4567/api/transactions/{id}
+
+5) Get account by id:
+GET http://localhost:4567/api/accounts/{id}
